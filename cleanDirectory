@@ -1,0 +1,68 @@
+#!/bin/bash
+# Program
+#	Clean specified files from designated folder, you could choose either fuzzy search deletion or filename extension deletion
+#	Step 1: Enter the designated folder's absolute path in the following double quotes, e.g. specifiedPath="$HOME/Downloads", after entering, please save and exit
+#	Step 2: Move this script to one of the folders referenced by your $PATH, e.g. /usr/local/bin
+#	Step 3: Execute the script, and pass arguments, the passed arguments could be either singular or plural e.g. testClean jpg exe txt
+#	Step 4: If you do NOT mean to perform deleting operation, enter either n or N to abort the script	
+#	Step 5: If you mean to to delete files, enter either y or Y to continue
+#	Step 6: If no arguments are passed, this script will delete everything in the designated folder
+#	Step 7: If arguments detected, options will prompt to let you choose either 'fuzzy search' or 'file extension search', simply enter 1 for fuzzy search or 2 for extension search
+#	Step 8: And then this scrip will delete files according to the options you chose.
+#	Note 1: If you choose fuzzy search, whatever matches the passed arguments will be deleted, e.g. All of the files containing passed strings match the rule but ignore the file extension
+#	Note 2: If you choose extension search, whatever files with extension matching the passed strings will be deleted
+#	Note 3: If designated folder's absolute path is not specified, the script will abort.
+
+#	根據輸入的條件刪除指定資料夾內的檔案，條件可以是模糊搜尋，或副檔名搜尋
+#	步驟1: 請在下面 specifiedPath 後的 double quotes 當中輸入你想要執行刪除動作的絕對路徑, 例如 specifiedPath="$HOME/Downloads", 輸入完後請存檔離開
+#	步驟2: 將此檔案移動到 $PATH 變量的資料夾內，例如 /usr/local/bin
+#	步驟3: 執行檔案，並視需求帶入參數，參數可單個或多個，例如 testClean jpg png txt
+#	步驟4: 如果你沒有要執行刪除動作，請按 n 或 N 停止
+#	步驟5: 如果你的確想執行刪除動作，請按 y 或 Y 繼續
+#	步驟6: 如果沒有帶入任何參數，將自動刪除所有位於指定資料夾內的檔案
+#	步驟7: 如果參數有帶入，選擇視窗將會跳出，可選擇要根據帶入的參數進行 1) 模糊搜尋刪除或是 2) 副檔名搜尋刪除, 輸入 1 或 2 來決定你要刪除檔案的方式
+#	步驟8: 輸入完畢後, 程序將會開始執行刪除動作
+#	備註1: 如果你選擇模糊刪除，只要檔名含有帶入的字串都會被刪除哦, 但是檔案的副檔名不會被列入搜尋範圍內
+#	備註2: 如果你選擇副檔名刪除，那不管檔名是什麼，只要副檔名符合帶入條件的檔案就會被刪除哦
+#	備註3: 如果指定資料夾的絕對路徑沒有指定，程序將會終止並且退出。
+#
+# History
+# 	2019/08/11	Ray	First release
+
+# Please specify the designated folder absolute path in between the following double quotes
+# 請在下面的 " " 中輸入指定的資料夾絕對路徑
+
+specifiedPath=""
+
+
+
+[ -z "${specifiedPath}" ] && echo 'Designated folder path was not specified, script aborted.' && exit 0
+
+effectivePath="${specifiedPath%/}"
+
+read -p "Are you sure you want to perform deleting operation in ${effectivePath}/ (Y/n) ?  " yn
+
+if [ "${yn}" == "y" ] || [ "${yn}" == "Y" ]; then
+	if [ "$#" == 0 ]; then
+		rm -rf ${effectivePath}/*
+	else
+		read -p 'Arguments detected, would you like to perform a 1) fuzzy search or 2) extension search? ex:(1 or 2) : ' fuzzyOrExtension
+		for arg in $@
+		do
+			if [ "${fuzzyOrExtension}" == 1 ]; then			
+				find ${effectivePath}/* -regex ".*${arg}.*\..*$" 2> /dev/null | xargs rm -rf
+			elif [ "${fuzzyOrExtension}" == 2 ]; then
+				find ${effectivePath}/* -regex ".*\.${arg}$" 2> /dev/null | xargs rm -rf
+			else
+				echo "Invalid option"
+				exit 0
+			fi
+		done
+	fi
+	echo "Okay, deleted"
+elif [ "${yn}" == "n" ] || [ "${yn}" == "N" ]; then
+	echo "Okay, cancelled"
+	exit 0
+else
+	echo "Invalid option"
+fi
